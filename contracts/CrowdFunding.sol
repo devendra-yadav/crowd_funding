@@ -85,10 +85,11 @@ contract CrowdFunding {
         require(block.timestamp > deadline, "Crowdfunding still going on.");
         require(contributors[msg.sender]>0, "You have not contributed to this crowd funding.");
 
-        contributors[msg.sender] = 0;
         currentCollection-=contributors[msg.sender];
-        (bool sent,) = payable(msg.sender).call{value: contributors[msg.sender]}("");
-        require(sent,"Failed to refund");
+        uint refundAmount=contributors[msg.sender];
+        contributors[msg.sender]=0;
+        (bool sent,) = payable(msg.sender).call{value: refundAmount}("");
+        require(sent==true, "Failed to refund");   
     }
 
     function supportRequest(uint _requestId) external {
@@ -118,8 +119,8 @@ contract CrowdFunding {
         require(request.numOfVoters > totalContributors/2, "Not enough support for this request.");
         request.completed = true;
         currentCollection-=request.amount;
-        (bool sent,) = payable(msg.sender).call{value: request.amount}("");
-        require(sent == true, "Failed to transfer");
+        (bool sent, ) = payable(request.recepient).call{value: request.amount}("");
+        require(sent == true, "Failed to make payment");
         emit RequestCompleted(manager, request.recepient, request.id, request.description, request.url, request.amount);
     }
 
